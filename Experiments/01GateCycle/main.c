@@ -24,10 +24,8 @@ void setGate(uint8_t gateIndex, uint8_t state);
 
 void setup() {
     // Set gate pins as outputs
-    GATE_DDR_0 |= (1 << GATE_PIN_0);
-    for (uint8_t i = GATE_PIN_1; i <= GATE_PIN_1 + NUM_GATES - 2; i++) {
-        GATE_DDR |= (1 << i);
-    }
+    GATE_DDR_0 |= (1 << GATE_PIN_0); // Set PB0 as output
+    GATE_DDR |= 0xFE;                // Set PD1 to PD7 as outputs (0xFE = 0b11111110)
 }
 
 void setGate(uint8_t gateIndex, uint8_t state) {
@@ -46,8 +44,8 @@ int main(void) {
     while (1) {
         static uint8_t ctrlIndex = 0;
         setGate(ctrlIndex, 1);
-        _delay_us(100);
+        _delay_ms(100);
         setGate(ctrlIndex, 0);
-        ctrlIndex++;
+        ctrlIndex = (ctrlIndex + 1) % NUM_GATES;
     }
 }

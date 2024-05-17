@@ -22,7 +22,9 @@
 
 // MAX5825 DAC Definitions
 #define MAX5825_ADDR 0x20 // 0010 000W, where W is the write bit
-#define MAX5825_CODEn_LOADn 0xB0 // 1011 XXXX, where X encodes the DAC channel
+#define MAX5825_REG_REF 0x20
+#define MAX5825_REG_CODEn_LOADn 0xB0 // 1011 XXXX, where X encodes the DAC channel
+#define MAX5825_REG_CODEn_LOADall 0xA0
 
 // Function prototypes
 void setup(void);
@@ -45,8 +47,19 @@ void setup() {
     twi_init();
 
     // Initialize MAX5825 DAC
-    max5825_write(0, 0b101); // DAC Power on, REF 2.5v
-    max5825_write(0, 0);
+    twi_start();
+    twi_write(MAX5825_ADDR); // Address and write command
+    twi_write((MAX5825_REG_REF | 0b101)); // DAC channel
+    twi_write(0x00);
+    twi_write(0x00);
+    twi_stop();
+
+    twi_start();
+    twi_write(MAX5825_ADDR); // Address and write command
+    twi_write(MAX5825_REG_CODEn_LOADall); // DAC channel
+    twi_write(0x00);
+    twi_write(0x00);
+    twi_stop();
 }
 
 void twi_init(void) {
@@ -73,12 +86,12 @@ void twi_write(uint8_t data) {
 void max5825_write(uint8_t channel, uint16_t value) {
     twi_start();
     twi_write(MAX5825_ADDR); // Address and write command
-    twi_write(MAX5825_CODEn_LOADn | (channel & 0x0F)); // DAC channel
+    twi_write(MAX5825_REG_CODEn_LOADn | (channel & 0x0F)); // DAC channel
     // Send the 12-bit data
     // The upper 8 bits of the value (MSB)
     twi_write((uint8_t)((value >> 8) & 0xFF));
     // The lower 4 bits of the value (LSB) shifted into the upper 4 bits of the byte, as the MAX5825 expects it
-    twi_write((uint8_t)(value & 0x00F0));
+    twi_write((uint8_t)(value & 0xF0));
     twi_stop();
 
     // Toggle LDAC to update the DAC output
@@ -91,9 +104,9 @@ int main(void) {
     setup();
 
     while (1) {
-        max5825_write(0, 65000);
+        max5825_write(0, 0xFFFF);
         _delay_ms(500); 
-        max5825_write(0, 0);
+        max5825_write(0, 0x0000);
         _delay_ms(500); 
     }
 }

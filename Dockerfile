@@ -3,6 +3,7 @@ FROM ubuntu:latest
 
 # Update the system and install AVR GCC toolchain, Make, Python3, and pip
 RUN apt-get update && apt-get install -y \
+    git \
     gcc-avr \
     binutils-avr \
     avr-libc \
@@ -12,6 +13,7 @@ RUN apt-get update && apt-get install -y \
 
 # Install Python packages using pip
 RUN pip3 install intelhex
+RUN pip3 install numpy
 
 # Clean up APT when done.
 RUN apt-get clean && \

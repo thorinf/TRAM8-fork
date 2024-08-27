@@ -75,7 +75,7 @@
 #define LED_BLINK4 6
 
 volatile uint8_t buttonState = BUTTON_IDLE;
-volatile uint8_t ledState = LED_OFF;                                                                            
+volatile uint8_t ledState = LED_OFF;
 
 typedef struct {
     uint8_t status;
@@ -86,18 +86,19 @@ typedef struct {
 
 volatile MIDI_Message midiMsg = {0, 0, 0, 0};
 
-uint8_t midi_map[32] = {
-    0x80, 24, 0x90, 32,
-    0x80, 25, 0x90, 34,
-    0x80, 26, 0x90, 35,
-    0x80, 27, 0x90, 36,
-    0x80, 28, 0x90, 37,
-    0x80, 29, 0x90, 38,
-    0x80, 30, 0x90, 39,
-    0x80, 31, 0x90, 40
+uint8_t midi_map[48] = {
+    0x80, 24, 0x90, 32, 0x90, 33,  // Gate C0, Step G#0, Reset A0
+    0x80, 25, 0x90, 34, 0x90, 35,  // Gate C#0, Step A#0, Reset B0
+    0x80, 26, 0x90, 36, 0x90, 37,  // Gate D0, Step C1, Reset C#1
+    0x80, 27, 0x90, 38, 0x90, 39,  // Gate D#0, Step D1, Reset D#1
+    0x80, 28, 0x90, 40, 0x90, 41,  // Gate E0, Step E1, Reset F1
+    0x80, 29, 0x90, 42, 0x90, 43,  // Gate F0, Step F#1, Reset G1
+    0x80, 30, 0x90, 44, 0x90, 45,  // Gate F#0, Step G#1, Reset A1
+    0x80, 31, 0x90, 46, 0x90, 47,  // Gate G0, Step A#1, Reset B1
 };
 
-uint16_t lfsrArray[NUM_GATES] = {0};
+uint16_t lfsr_seeds[NUM_GATES];
+uint16_t lfsr_array[NUM_GATES];
 
 void setup(void);
 void USART_Init(unsigned int ubrr);
@@ -111,6 +112,7 @@ void twi_write(uint8_t data);
 void max5825_write(uint8_t channel, uint16_t value);
 void processMIDI(void);
 uint16_t updateRand(uint16_t *lfsr);
+uint16_t updateRandAlt(uint16_t *lfsr);
 
 int main(void) {
     setup();
@@ -118,6 +120,13 @@ int main(void) {
     while (1) {
         processButton();
         updateLED();
+
+        if (buttonState == BUTTON_RELEASED) {
+            for (uint8_t i = 0; i < NUM_GATES; i++) {
+                lfsr_seeds[i] = updateRandAlt(&lfsr_array[i]);
+            }
+        }
+
         _delay_ms(TIMER_TICK);
     }
 }
@@ -160,16 +169,17 @@ void setup() {
     twi_stop();
 
     USART_Init(MY_UBRR);
-    sei();
 
     for (uint8_t i = 0; i < NUM_GATES; i++) {
-        // Initialise the LFSR start points
-        lfsrArray[i] = i + 1;
+        lfsr_seeds[i] = (i + 1) << 4;
+        lfsr_array[i] = (i + 1) << 4;
 
         setGate(i, 1);
         _delay_ms(50);
         setGate(i, 0);
     }
+
+    sei();
 }
 
 void USART_Init(unsigned int ubrr) {
@@ -199,8 +209,11 @@ ISR(USART_RXC_vect) {
             midiMsg.ready = 1;  // Message is ready
             midiState = 0;
 
-            processMIDI();
             break;
+    }
+
+    if (midiMsg.ready) {
+        processMIDI();
     }
 }
 
@@ -315,37 +328,47 @@ inline void setGate(uint8_t gateIndex, uint8_t state) {
         CLEAR_BIT(*port, pin);
 }
 
-uint16_t updateRand(uint16_t *lfsr) {
+inline uint16_t updateRand(uint16_t *lfsr) {
     uint16_t bit = ((*lfsr >> 0) ^ (*lfsr >> 2) ^ (*lfsr >> 3) ^ (*lfsr >> 5)) & 1;
     *lfsr = (*lfsr >> 1) | (bit << 15);
     return *lfsr;
 }
 
-void processMIDI() {
+inline uint16_t updateRandAlt(uint16_t *lfsr) {
+    uint16_t bit = ((*lfsr >> 1) ^ (*lfsr >> 3) ^ (*lfsr >> 4) ^ (*lfsr >> 8)) & 1;
+    *lfsr = (*lfsr >> 1) | (bit << 15);
+    return *lfsr;
+}
+
+inline void processMIDI() {
     uint8_t gateIndex = 0;
     uint8_t *mapPtr = midi_map;
+    uint8_t gateCommand, gateValue, cvCommand1, cvValue1, cvCommand2, cvValue2;
+    uint8_t commandFiltered = midiMsg.status & 0xEF;
+    uint8_t noteOnFlag = (midiMsg.status & 0xF0) == 0x90;
+    uint8_t data1 = midiMsg.data1;
 
     while (gateIndex < NUM_GATES) {
-        uint8_t gateCommand = *mapPtr++;
-        uint8_t gateValue = *mapPtr++;
-        uint8_t resetCommand = *mapPtr++;
-        uint8_t resetValue = *mapPtr++;
+        gateCommand = *mapPtr++;
+        gateValue = *mapPtr++;
+        cvCommand1 = *mapPtr++;
+        cvValue1 = *mapPtr++;
+        cvCommand2 = *mapPtr++;
+        cvValue2 = *mapPtr++;
 
-        if ((midiMsg.status) == resetCommand) {
-            if (midiMsg.data1 == resetValue) {
-                lfsrArray[gateIndex] = gateIndex + 1;
-            }
+        if (commandFiltered == gateCommand && data1 == gateValue) {
+            setGate(gateIndex, noteOnFlag);
+        }
+        if (midiMsg.status == cvCommand1 && data1 == cvValue1) {
+            uint16_t rand = updateRand(&lfsr_array[gateIndex]);
+            max5825_write(gateIndex, rand);
+        }
+        if (midiMsg.status == cvCommand2 && data1 == cvValue2) {
+            lfsr_array[gateIndex] = lfsr_seeds[gateIndex];
         }
 
-        // Make NoteOffs into NoteOns and compare
-        if ((midiMsg.status & 0xEF) == gateCommand) {
-            if (midiMsg.data1 == gateValue) {
-                setGate(gateIndex, (midiMsg.status & 0xF0) == 0x90);
-                uint16_t rand = updateRand(&lfsrArray[gateIndex]);
-                max5825_write(gateIndex, rand);
-            }
-        }
         gateIndex++;
     }
+
     midiMsg.ready = 0;
 }

@@ -22,6 +22,17 @@ def pitch_tracking(input_pitch, target_pitch):
     return cents
 
 
+def dac_values(dac_values):
+    # Printing in C array format with 12 values per line
+    print(f"\nuint16_t pitch_lookup[{len(dac_values)}]" + " = {")
+    for i, value in enumerate(dac_values):
+        uint16_t = hex(value << 4)[2:].zfill(4)
+        if i % 12 == 0 and i != 0:
+            print()
+        print(f"0x{uint16_t.upper()}", end=", " if i < len(dac_values) - 1 else "")
+    print("};\n")
+
+
 def main():
     tunings = []
     dav_values = []
@@ -30,7 +41,7 @@ def main():
         dac, nearest_voltage = dac_quantise(voltage)
         nearest_pitch = voltage2pitch(nearest_voltage)
         cents = pitch_tracking(nearest_pitch, pitch)
-        
+
         if dac >= 2**12:
             print(f"\nNoteon: {pitch:3d}, DAC value exceeds 12-bit range")
             break
@@ -40,15 +51,6 @@ def main():
         tunings.append(abs(cents))
 
     print(f"\nAverage Cents: {sum(tunings) / len(tunings):0.5f}")
-
-    # Printing in C array format with 12 values per line
-    print(f"\nuint16_t pitch_lookup[{len(dav_values)}]" + " = {")
-    for i, value in enumerate(dav_values):
-        uint16_t = hex(value << 4)[2:].zfill(4)
-        if i % 12 == 0 and i != 0:
-            print()
-        print(f"0x{uint16_t.upper()}", end=", " if i < len(dav_values) - 1 else "")
-    print("};\n")
 
 
 if __name__ == "__main__":

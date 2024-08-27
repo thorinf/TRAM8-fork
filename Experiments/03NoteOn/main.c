@@ -1,9 +1,9 @@
 #define F_CPU 16000000UL
 #define BAUD 31250UL
-#define MY_UBRR F_CPU/16/BAUD-1
+#define MY_UBRR F_CPU / 16 / BAUD - 1
 
-#include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/io.h>
 
 // Define the number of gates and their respective hardware configuration
 #define NUM_GATES 8
@@ -42,8 +42,8 @@ int main(void) {
 }
 
 void setup() {
-    GATE_DDR_0 |= (1 << GATE_PIN_0); // Set PB0 as output
-    GATE_DDR |= 0xFE;                // Set PD1 to PD7 as outputs (0xFE = 0b11111110)
+    GATE_DDR_0 |= (1 << GATE_PIN_0);  // Set PB0 as output
+    GATE_DDR |= 0xFE;                 // Set PD1 to PD7 as outputs (0xFE = 0b11111110)
 
     USART_Init(MY_UBRR);
     sei();
@@ -52,7 +52,7 @@ void setup() {
 void USART_Init(unsigned int ubrr) {
     UBRRH = (unsigned char)(ubrr >> 8);
     UBRRL = (unsigned char)ubrr;
-    UCSRB = (1 << RXEN) | (1 << RXCIE);  // Enable receiver and receive complete interrupt
+    UCSRB = (1 << RXEN) | (1 << RXCIE);                  // Enable receiver and receive complete interrupt
     UCSRC = (1 << URSEL) | (1 << UCSZ1) | (1 << UCSZ0);  // 8-bit data
 }
 
@@ -83,8 +83,10 @@ ISR(USART_RXC_vect) {
 inline void setGate(uint8_t gateIndex, uint8_t state) {
     uint8_t pin = (gateIndex == 0) ? GATE_PIN_0 : GATE_PIN_1 + gateIndex - 1;
     volatile uint8_t* port = (gateIndex == 0) ? &GATE_PORT_0 : &GATE_PORT;
-    if (state) SET_BIT(*port, pin);
-    else CLEAR_BIT(*port, pin);
+    if (state)
+        SET_BIT(*port, pin);
+    else
+        CLEAR_BIT(*port, pin);
 }
 
 void processMIDI() {

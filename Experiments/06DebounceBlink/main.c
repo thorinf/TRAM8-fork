@@ -1,9 +1,9 @@
 #define F_CPU 16000000UL
 #define BAUD 31250UL
 
-#include <avr/io.h>
-#include <avr/interrupt.h>
 #include <avr/eeprom.h>
+#include <avr/interrupt.h>
+#include <avr/io.h>
 #include <util/delay.h>
 
 #define NUM_GATES 8
@@ -36,23 +36,23 @@
 #define BUTTON_PIN_REG PINC
 
 // EEPROM configuration
-#define EEPROM_BUTTON_FIX (uint8_t *) 0x07
+#define EEPROM_BUTTON_FIX (uint8_t*)0x07
 
 // Button states
-#define BUTTON_IDLE       0
+#define BUTTON_IDLE 0
 #define BUTTON_DEBOUNCING 1
-#define BUTTON_PRESSED    2
-#define BUTTON_HELD       3
-#define BUTTON_DOWN       4
-#define BUTTON_RELEASED   5
+#define BUTTON_PRESSED 2
+#define BUTTON_HELD 3
+#define BUTTON_DOWN 4
+#define BUTTON_RELEASED 5
 
 // LED states
-#define LED_OFF      1
-#define LED_ON       2
-#define LED_BLINK1   3
-#define LED_BLINK2   4
-#define LED_BLINK3   5
-#define LED_BLINK4   6
+#define LED_OFF 1
+#define LED_ON 2
+#define LED_BLINK1 3
+#define LED_BLINK2 4
+#define LED_BLINK3 5
+#define LED_BLINK4 6
 
 volatile uint8_t buttonState = BUTTON_IDLE;
 volatile uint8_t ledState = LED_OFF;
@@ -68,7 +68,7 @@ int main(void) {
     while (1) {
         processButton();
 
-        if (buttonState == BUTTON_HELD){
+        if (buttonState == BUTTON_HELD) {
             ledState = ledState == LED_OFF ? LED_BLINK1 : LED_OFF;
         } else if (buttonState == BUTTON_RELEASED && ledState > LED_ON) {
             ledState = ((ledState - LED_BLINK1 + 1) % 4) + LED_BLINK1;
@@ -77,16 +77,16 @@ int main(void) {
         updateLED();
 
         setGate(buttonState, 1);
-        _delay_ms(TIMER_TICK); 
+        _delay_ms(TIMER_TICK);
         setGate(buttonState, 0);
     }
 }
 
 void setup() {
-    GATE_DDR_0 |= (1 << GATE_PIN_0); // Set PB0 as output
-    GATE_DDR |= 0xFE;                // Set PD1 to PD7 as outputs (0xFE = 0b11111110)
+    GATE_DDR_0 |= (1 << GATE_PIN_0);  // Set PB0 as output
+    GATE_DDR |= 0xFE;                 // Set PD1 to PD7 as outputs (0xFE = 0b11111110)
 
-	DDRC = (1 << LED_PIN) | (1 << BUTTON_PIN);
+    DDRC = (1 << LED_PIN) | (1 << BUTTON_PIN);
     LED_SET_OFF();
 
     // Fix for Hardware Version 1.5, from original code
@@ -96,9 +96,9 @@ void setup() {
     }
 
     for (uint8_t i = 0; i < NUM_GATES; i++) {
-        setGate(i, 1); 
-        _delay_ms(50); 
-        setGate(i, 0); 
+        setGate(i, 1);
+        _delay_ms(50);
+        setGate(i, 0);
     }
 }
 
@@ -161,8 +161,10 @@ void updateLED(void) {
         default:
             if (++ledTimer >= (1000 >> (ledState - LED_BLINK1)) / TIMER_TICK) {
                 ledToggle = !ledToggle;
-                if (ledToggle) LED_SET_ON();
-                else LED_SET_OFF();
+                if (ledToggle)
+                    LED_SET_ON();
+                else
+                    LED_SET_OFF();
                 ledTimer = 0;
             }
             break;
@@ -172,7 +174,8 @@ void updateLED(void) {
 inline void setGate(uint8_t gateIndex, uint8_t state) {
     uint8_t pin = (gateIndex == 0) ? GATE_PIN_0 : GATE_PIN_1 + gateIndex - 1;
     volatile uint8_t* port = (gateIndex == 0) ? &GATE_PORT_0 : &GATE_PORT;
-    if (state) SET_BIT(*port, pin);
-    else CLEAR_BIT(*port, pin);
+    if (state)
+        SET_BIT(*port, pin);
+    else
+        CLEAR_BIT(*port, pin);
 }
-

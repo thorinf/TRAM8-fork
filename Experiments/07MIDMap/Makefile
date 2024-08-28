@@ -2,17 +2,21 @@ CC = avr-gcc
 CFLAGS = -g -Os -mmcu=atmega8
 OBJCOPY = avr-objcopy
 SIZE = avr-size
+BUILD_DIR = build
 
-all: main.hex size
+all: $(BUILD_DIR)/main.hex size
 
-main.elf: main.c
+$(BUILD_DIR)/main.elf: main.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ $^
 
-main.hex: main.elf
+$(BUILD_DIR)/main.hex: $(BUILD_DIR)/main.elf | $(BUILD_DIR)
 	$(OBJCOPY) -j .text -j .data -O ihex $^ $@
 
-size: main.elf
-	$(SIZE) -C --mcu=atmega8 main.elf
+size: $(BUILD_DIR)/main.elf
+	$(SIZE) -C --mcu=atmega8 $^
 
 clean:
-	-rm -f main.elf main.hex
+	-rm -rf $(BUILD_DIR)
+
+$(BUILD_DIR):
+	mkdir -p $@

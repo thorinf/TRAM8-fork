@@ -1,4 +1,13 @@
-
-*.o
+# Dependency Files
 *.d
+
+# Compiler outputs
+*.o
+build/
+
+# OS generated files #
 *.DS_Store
+
+# Visual Studio Code
+.vscode/
+.devcontainer/

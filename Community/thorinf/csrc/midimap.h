@@ -38,12 +38,12 @@ uint8_t midi_map_cc[56] = {
 
 // MIDI mapping for the BeatStep Pro
 uint8_t midi_map_bsp[56] = {
-    MIDIMAP_RANDSEQ_SAH, 0x97, 24, 0x97, 32, 0x97, 33,  // Gate C0, Step G#0, Reset A0
-    MIDIMAP_RANDSEQ_SAH, 0x97, 25, 0x97, 34, 0x97, 35,  // Gate C#0, Step A#0, Reset B0
-    MIDIMAP_RANDSEQ,     0x97, 26, 0x97, 36, 0x97, 37,  // Gate D0, Step C1, Reset C#1
-    MIDIMAP_RANDSEQ,     0x97, 27, 0x97, 38, 0x97, 39,  // Gate D#0, Step D1, Reset D#1
-    MIDIMAP_VELOCITY,    0x97, 28, 0,    0,  0,    0,   // Gate E0
-    MIDIMAP_VELOCITY,    0x97, 29, 0,    0,  0,    0,   // Gate F0
+    MIDIMAP_RANDSEQ_SAH, 0x97, 36, 0x97, 44, 0x97, 45,  // Gate C0, Step G#0, Reset A0
+    MIDIMAP_RANDSEQ_SAH, 0x97, 37, 0x97, 46, 0x97, 47,  // Gate C#0, Step A#0, Reset B0
+    MIDIMAP_RANDSEQ,     0x97, 38, 0x97, 48, 0x97, 49,  // Gate D0, Step C1, Reset C#1
+    MIDIMAP_RANDSEQ,     0x97, 39, 0x97, 50, 0x97, 51,  // Gate D#0, Step D1, Reset D#1
+    MIDIMAP_VELOCITY,    0x97, 40, 0,    0,  0,    0,   // Gate E0
+    MIDIMAP_VELOCITY,    0x97, 41, 0,    0,  0,    0,   // Gate F0
     MIDIMAP_PITCH,       0x90, 0,  0,    0,  0,    0,   // Sequencer 1
     MIDIMAP_PITCH,       0x91, 0,  0,    0,  0,    0,   // Sequencer 2
 };

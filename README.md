@@ -36,6 +36,10 @@ Velocity/CV Outputs:
 	7: random triggered each bar
 	8: 16th stepped ramp to go from 0-5V in a bar
 
+# Custom Firmware:
+
+* [thorinf](Community/thorinf)
+
 # CC BY-NC-ND 4.0 KAY KNOFE OF LPZW.modules
 
 

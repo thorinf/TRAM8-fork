@@ -9,7 +9,7 @@ def voltage2pitch(voltage):
     return 12.0 * voltage
 
 
-def dac_quantise(voltage, v_ref=8, bits=12):
+def dac_quantise(voltage, v_ref=5, bits=12):
     levels = 2**bits
     lsb = v_ref / (levels - 1)
     dac = round(voltage / lsb)
@@ -22,7 +22,7 @@ def pitch_tracking(input_pitch, target_pitch):
     return cents
 
 
-def dac_values(dac_values):
+def to_header(dac_values):
     # Printing in C array format with 12 values per line
     print(f"\nuint16_t pitch_lookup[{len(dac_values)}]" + " = {")
     for i, value in enumerate(dac_values):
@@ -35,7 +35,7 @@ def dac_values(dac_values):
 
 def main():
     tunings = []
-    dav_values = []
+    dac_values = []
     for pitch in range(128):
         voltage = pitch2voltage(pitch)
         dac, nearest_voltage = dac_quantise(voltage)
@@ -47,10 +47,11 @@ def main():
             break
 
         print(f"Noteon: {pitch:3d}, Nearest: {nearest_pitch:0.3f}, Cents: {cents:0.5f}")
-        dav_values.append(dac)
+        dac_values.append(dac)
         tunings.append(abs(cents))
 
     print(f"\nAverage Cents: {sum(tunings) / len(tunings):0.5f}")
+    to_header(dac_values)
 
 
 if __name__ == "__main__":

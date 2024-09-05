@@ -214,4 +214,41 @@ function updateFromText() {
     }
 }
 
+async function sendSysExMessageWithPauses() {
+    if (navigator.requestMIDIAccess) {
+        try {
+            const midiAccess = await navigator.requestMIDIAccess({ sysex: true });
+            onMIDISuccess(midiAccess);
+        } catch (error) {
+            onMIDIFailure(error);
+        }
+    } else {
+        alert("Web MIDI API is not supported in this browser.");
+    }
+}
+
+async function onMIDISuccess(midiAccess) {
+    const outputs = Array.from(midiAccess.outputs.values());
+    if (outputs.length > 0) {
+        const output = outputs[0];  
+        const flattenedArray = globalArray.flat().map(value => value & 0x7F);
+
+        const sysExMessage = [0xF0, ...flattenedArray, 0xF7];
+
+        output.send(sysExMessage);
+        console.log("Sent SysEx message:", sysExMessage);
+    } else {
+        console.log("No MIDI output devices available.");
+    }
+}
+
+function onMIDIFailure(error) {
+    console.error("Failed to access MIDI devices:", error);
+}
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+document.getElementById("sendSysExButton").addEventListener("click", sendSysExMessageWithPauses);
 window.onload = initializeDropdowns;

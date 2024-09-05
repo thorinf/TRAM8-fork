@@ -283,11 +283,7 @@ void menu() {
                     break;
                 case 4:
                     gate_set(menuState, 0);
-                    gate_set(0, 1);
-                    gate_set(7, 1);
                     sysExMidiMap();
-                    gate_set(0, 0);
-                    gate_set(7, 0);
                     inMenu = 0;
                     break;
                 case 5:
@@ -319,21 +315,38 @@ void copyMidiMap() {
 void sysExMidiMap() {
     uint8_t sysExByte = 0;
     uint8_t *midiMapPtr = midi_map;
-    uint8_t endOfMessage = 0;
+    uint8_t startOfMessage = 0;
 
     cli();
+    gate_set(0, 1);
+    gate_set(7, 1);
 
-    while (!endOfMessage && (midiMapPtr < (midi_map + sizeof(midi_map)))) {
+    while (midiMapPtr <= (midi_map + sizeof(midi_map))) {
         while (!(UCSRA & (1 << RXC)));
-
         sysExByte = UDR;
+
+        if (sysExByte == 0xF0) {
+            startOfMessage = 1;
+            continue;
+        } else if (sysExByte == 0xF7 || !startOfMessage) {
+            break;
+        }
 
         *midiMapPtr = sysExByte;
         midiMapPtr++;
+    }
 
-        if (sysExByte == 0xF7) {
-            endOfMessage = 1;
-        }
+    gate_set(0, 0);
+    gate_set(7, 0);
+
+    if (!startOfMessage) {
+        gate_set(0, 1);
+    }
+    if (sysExByte != 0xF7) {
+        gate_set(1, 1);
+    }
+    if (midiMapPtr != (midi_map + sizeof(midi_map))) {
+        gate_set(2, 1);
     }
 
     sei();

@@ -72,7 +72,7 @@ Copies the MIDI Mapping from the Preset into memory. This will not be saved.
 The Tram8 will wait for SysEx messages that indicate the mapping. The tool in the `js` subdirectory can be used to create mappings and send them to the device. To use this, once the repository is cloned simply open `index.html` in your browser. You will need to use a browser that supports sending MIDI or SysEx, but there are a few that do e.g., Chrome.
 
 <p align="center">
-  <img src="./resource/midi_mapper_tool.PNG" alt="MIDI Mapper Tool" width="500px"/>
+  <img src="./resources/midi_mapper_tool.PNG" alt="MIDI Mapper Tool"/>
 </p>
 
 ### 6. Exit

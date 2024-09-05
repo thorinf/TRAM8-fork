@@ -74,6 +74,7 @@ void menu(void);
 void loadMidiMap(void);
 void saveMidiMap(void);
 void copyMidiMap(void);
+void sysExMidiMap(void);
 void newSeeds(void);
 void resetDacBuffer(void);
 void processMIDI(void);
@@ -257,7 +258,7 @@ void menu() {
             midiLearn();
         } else if (buttonState == BUTTON_RELEASED) {
             gate_set(menuState, 0);
-            menuState = (menuState + 1) % 5;
+            menuState = (menuState + 1) % 6;
             gate_set(menuState, 1);
         } else if (buttonState == BUTTON_HELD) {
             switch (menuState) {
@@ -266,21 +267,30 @@ void menu() {
                     isLearning = 1;
                     break;
                 case 1:
-                    saveMidiMap();
                     gate_set(menuState, 0);
+                    saveMidiMap();
                     inMenu = 0;
                     break;
                 case 2:
-                    loadMidiMap();
                     gate_set(menuState, 0);
+                    loadMidiMap();
                     inMenu = 0;
                     break;
                 case 3:
-                    copyMidiMap();
                     gate_set(menuState, 0);
+                    copyMidiMap();
                     inMenu = 0;
                     break;
                 case 4:
+                    gate_set(menuState, 0);
+                    gate_set(0, 1);
+                    gate_set(7, 1);
+                    sysExMidiMap();
+                    gate_set(0, 0);
+                    gate_set(7, 0);
+                    inMenu = 0;
+                    break;
+                case 5:
                     gate_set(menuState, 0);
                     inMenu = 0;
                     break;
@@ -304,6 +314,29 @@ void copyMidiMap() {
     for (uint8_t i = 0; i < sizeof(midi_map); i++) {
         midi_map[i] = midi_map_preset[i];
     }
+}
+
+void sysExMidiMap() {
+    uint8_t sysExByte = 0;
+    uint8_t *midiMapPtr = midi_map;
+    uint8_t endOfMessage = 0;
+
+    cli();
+
+    while (!endOfMessage && (midiMapPtr < (midi_map + sizeof(midi_map)))) {
+        while (!(UCSRA & (1 << RXC)));
+
+        sysExByte = UDR;
+
+        *midiMapPtr = sysExByte;
+        midiMapPtr++;
+
+        if (sysExByte == 0xF7) {
+            endOfMessage = 1;
+        }
+    }
+
+    sei();
 }
 
 void resetDacBuffer() {
@@ -403,6 +436,7 @@ inline void processMIDI() {
 inline void midiLearn() {
     static uint8_t learningIndex = 0;
     static uint8_t learningMapType = MIDIMAP_VELOCITY;
+    uint8_t nextGateFlag = 0;
 
     if (midiMsg.ready) {
         switch (learningMapType) {
@@ -412,11 +446,7 @@ inline void midiLearn() {
                     midi_map[learningIndex * 7 + 1] = midiMsg.status;
                     midi_map[learningIndex * 7 + 2] = midiMsg.data1;
 
-                    gate_set(learningIndex, 1);
-                    learningIndex++;
-                    learningMapType = MIDIMAP_VELOCITY;
-                    ledState = LED_BLINK1;
-                    ledBlinkCount = 1;
+                    nextGateFlag = 1;
                 }
                 break;
             case MIDIMAP_CC:
@@ -433,11 +463,7 @@ inline void midiLearn() {
                     midi_map[learningIndex * 7] = learningMapType;
                     midi_map[learningIndex * 7 + 1] = midiMsg.status;
 
-                    gate_set(learningIndex, 1);
-                    learningIndex++;
-                    learningMapType = MIDIMAP_VELOCITY;
-                    ledState = LED_BLINK1;
-                    ledBlinkCount = 1;
+                    nextGateFlag = 1;
                 }
                 break;
             case MIDIMAP_PITCH_SAH:
@@ -462,22 +488,14 @@ inline void midiLearn() {
                     midi_map[learningIndex * 7 + 3] = midiMsg.status;
                     midi_map[learningIndex * 7 + 4] = midiMsg.data1;
 
-                    gate_set(learningIndex, 1);
-                    learningIndex++;
-                    learningMapType = MIDIMAP_VELOCITY;
-                    ledState = LED_BLINK1;
-                    ledBlinkCount = 1;
+                    nextGateFlag = 1;
                 }
                 break;
             case AWAITING_PITCH:
                 if (IS_NOTE_ON(midiMsg.status)) {
                     midi_map[learningIndex * 7 + 3] = midiMsg.status;
 
-                    gate_set(learningIndex, 1);
-                    learningIndex++;
-                    learningMapType = MIDIMAP_VELOCITY;
-                    ledState = LED_BLINK1;
-                    ledBlinkCount = 1;
+                    nextGateFlag = 1;
                 }
                 break;
             case AWAITING_STEP:
@@ -493,11 +511,7 @@ inline void midiLearn() {
                     midi_map[learningIndex * 7 + 5] = midiMsg.status;
                     midi_map[learningIndex * 7 + 6] = midiMsg.data1;
 
-                    gate_set(learningIndex, 1);
-                    learningIndex++;
-                    learningMapType = MIDIMAP_VELOCITY;
-                    ledState = LED_BLINK1;
-                    ledBlinkCount = 1;
+                    nextGateFlag = 1;
                 }
                 break;
             default:
@@ -523,6 +537,14 @@ inline void midiLearn() {
                 ledBlinkCount = learningMapType;
                 break;
         }
+    }
+
+    if (nextGateFlag) {
+        gate_set(learningIndex, 1);
+        learningIndex++;
+        learningMapType = MIDIMAP_VELOCITY;
+        ledState = LED_BLINK1;
+        ledBlinkCount = 1;
     }
 
     if (learningIndex == NUM_GATES || buttonState == BUTTON_HELD) {

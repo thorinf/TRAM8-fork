@@ -67,6 +67,10 @@ Copies the MIDI Mapping from the Preset into memory. This will not be saved.
 |8| Pitch                                 | Channel 2 (Sequencer 2 default).                                                                     |
 
 
-### 5. Exit
+### 5. SysEx MIDI Map
+
+The Tram8 will wait for SysEx messages that indicate the mapping. The tool in the `js` subdirectory can be used to create mappings and send them to the device. To use this, once the repository is cloned simply open `index.html` in your browser. You will need to use a browser that supports sending MIDI or SysEx, but there are a few that do e.g., Chrome.
+
+### 6. Exit
 
 Exits the Menu back to ordinary play function.

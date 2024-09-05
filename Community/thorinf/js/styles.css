@@ -51,3 +51,25 @@ h1 {
     border: 1px solid #ccc;
     resize: none;
 }
+
+button {
+    padding: 10px 18px;
+    background-color: #333;
+    color: white;
+    font-size: 15px;
+    border: none;
+    border-radius: 5px; 
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.3s; 
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); 
+}
+
+button:hover {
+    background-color: #555; 
+}
+
+button:focus {
+    outline: none;
+}
+
+

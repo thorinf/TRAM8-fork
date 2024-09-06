@@ -1,5 +1,9 @@
 # Custom Firmware
 
+<p align="center">
+  <img src="./resources/tram8.PNG" alt="Tram8"/>
+</p>
+
 ## MIDI Modes
 
 This firmware allows each of the 8 Gate-CV pairs to be programmed individually with any of 6 MIDI modes. A MIDI Map stores the conditions for the Gate-CV pairs so that MIDI messages can be passed correctly during play. Any MIDI channel can be used, however it's in most cases best for triggers to not match and Pitch values to come from unqiue channels (more details in MIDI Learn). 

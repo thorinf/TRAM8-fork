@@ -8,5 +8,6 @@
 
 void pin_initialize(void);
 void gate_set(uint8_t gateIndex, uint8_t state);
+void gate_set_multiple(uint8_t gateMask, uint8_t state);
 
 #endif

@@ -28,3 +28,16 @@ void gate_set(uint8_t gateIndex, uint8_t state) {
         *port &= ~(1 << pin);
     }
 }
+
+void gate_set_multiple(uint8_t gateMask, uint8_t state) {
+    uint8_t portBMask = (gateMask & 0x01) << GATE_PIN_0;
+    uint8_t portDMask = ((gateMask >> 1) & 0x7F) << GATE_PIN_1;
+
+    if (state) {
+        GATE_PORT_B |= portBMask;
+        GATE_PORT_D |= portDMask;
+    } else {
+        GATE_PORT_B &= ~portBMask;
+        GATE_PORT_D &= ~portDMask;
+    }
+}

@@ -1,4 +1,52 @@
 const MIDIMAP_VELOCITY = 0;
+const MIDIMAP_CC = 1;
+const MIDIMAP_PITCH = 2;
+const MIDIMAP_PITCH_SAH = 3;
+const MIDIMAP_RANDSEQ = 4;
+const MIDIMAP_RANDSEQ_SAH = 5;
+
+const channelOptions = Array.from({ length: 16 }, (_, i) => ({ value: 0x90 + i, text: `Channel ${i + 1}` }));
+const noteOptions = Array.from({ length: 128 }, (_, i) => ({ value: i, text: `Note ${i}` }));
+const controllerOptions = Array.from({ length: 128 }, (_, i) => ({ value: i, text: `Controller ${i}` }));
+
+const midiModeOptions = [
+    {
+        value: 0,
+        text: "Velocity",
+        requiredOptions: [channelOptions, noteOptions],
+        requiredLabels: ["Gate Channel", "Gate Note"]
+    },
+    {
+        value: 1,
+        text: "Control Change",
+        requiredOptions: [channelOptions, noteOptions, channelOptions, controllerOptions],
+        requiredLabels: ["Gate Channel", "Gate Note", "Controller Channel", "Controller"]
+    },
+    {
+        value: 2,
+        text: "Pitch",
+        requiredOptions: [channelOptions],
+        requiredLabels: ["Pitch Channel"]
+    },
+    {
+        value: 3,
+        text: "Pitch, Sample & Hold",
+        requiredOptions: [channelOptions, noteOptions, channelOptions],
+        requiredLabels: ["Gate Channel", "Gate Note", "Pitch Channel"]
+    },
+    {
+        value: 4,
+        text: "Random Step Sequencer",
+        requiredOptions: [channelOptions, noteOptions, channelOptions, noteOptions, channelOptions, noteOptions],
+        requiredLabels: ["Gate Channel", "Gate Note", "Step Channel", "Step Note", "Reset Channel", "Reset Note"]
+    },
+    {
+        value: 5,
+        text: "Random Step Sequencer, Sample & Hold",
+        requiredOptions: [channelOptions, noteOptions, channelOptions, noteOptions, channelOptions, noteOptions],
+        requiredLabels: ["Gate Channel", "Gate Note", "Step Channel", "Step Note", "Reset Channel", "Reset Note"]
+    }
+];
 
 function loadInitialData() {
     const savedArray = localStorage.getItem('globalArray');
@@ -6,7 +54,7 @@ function loadInitialData() {
         return JSON.parse(savedArray);
     } else {
         return [
-            [MIDIMAP_VELOCITY, 0x90, 24, 0, 0, 0, 0], 
+            [MIDIMAP_VELOCITY, 0x90, 24, 0, 0, 0, 0],
             [MIDIMAP_VELOCITY, 0x90, 25, 0, 0, 0, 0],
             [MIDIMAP_VELOCITY, 0x90, 26, 0, 0, 0, 0],
             [MIDIMAP_VELOCITY, 0x90, 27, 0, 0, 0, 0],
@@ -18,199 +66,133 @@ function loadInitialData() {
     }
 }
 
-const channelOptions = Array.from({ length: 16 }, (_, i) => ({ value: 0x90 + i, text: `Channel ${i + 1}` }));
-const noteOptions = Array.from({ length: 128 }, (_, i) => ({ value: i, text: `Note ${i}` }));
-const controllerOptions = Array.from({ length: 128 }, (_, i) => ({ value: i, text: `Controller ${i}` }));
-
-const midiModeOptions = [
-    { 
-        value: 0, 
-        text: "Velocity", 
-        visibleCount: 3, 
-        requiredOptions: [channelOptions, noteOptions], 
-        requiredLabels: ["Gate Channel", "Gate Note"] 
-    },
-    { 
-        value: 1, 
-        text: "Control Change", 
-        visibleCount: 5, 
-        requiredOptions: [channelOptions, noteOptions, channelOptions, controllerOptions], 
-        requiredLabels: ["Gate Channel", "Gate Note", "Controller Channel", "Controller"] },
-    { 
-        value: 2, 
-        text: "Pitch", 
-        visibleCount: 2, 
-        requiredOptions: [channelOptions], 
-        requiredLabels: ["Pitch Channel"] },
-    { 
-        value: 3, 
-        text: "Pitch, Sample & Hold", 
-        visibleCount: 4, 
-        requiredOptions: [channelOptions, noteOptions, channelOptions], 
-        requiredLabels:  ["Gate Channel", "Gate Note", "Pitch Channel"] },
-    { 
-        value: 4, 
-        text: "Random Step Sequencer", 
-        visibleCount: 7, 
-        requiredOptions: [channelOptions, noteOptions, channelOptions, noteOptions, channelOptions, noteOptions], 
-        requiredLabels:  ["Gate Channel", "Gate Note", "Step Channel", "Step Note", "Reset Channel", "Reset Note"] },
-    { 
-        value: 5, 
-        text: "Random Step Sequencer, Sample & Hold", 
-        visibleCount: 7, 
-        requiredOptions: [channelOptions, noteOptions, channelOptions, noteOptions, channelOptions, noteOptions], 
-        requiredLabels:  ["Gate Channel", "Gate Note", "Step Channel", "Step Note", "Reset Channel", "Reset Note"] 
-    }
-];
-
 function initializeDropdowns() {
     const dropdownArea = document.getElementById('dropdownArea');
     dropdownArea.innerHTML = '';
     globalArray = loadInitialData();
-    globalArray.forEach((row, rowIndex) => {
-        const rowDiv = document.createElement('div');
-        rowDiv.className = 'dropdownRow';
-        rowDiv.id = `row-${rowIndex}`;
+    console.log("Loaded array: ", globalArray);
 
-        row.forEach((value, colIndex) => {
-            if (colIndex > 0) {
-                const label = document.createElement('label');
-                label.htmlFor = `dropdown-${rowIndex}-${colIndex}`;
-                label.textContent = midiModeOptions[globalArray[rowIndex][0]].requiredLabels[colIndex - 1] || "";
-                rowDiv.appendChild(label);
-            }
-
-            const select = document.createElement('select');
-            select.id = `dropdown-${rowIndex}-${colIndex}`;
-            select.onchange = () => {
-                let newValue = colIndex === 0 ? parseInt(select.value, 10) : select.value;
-                updateArrayFromDropdown(rowIndex, colIndex, newValue);
-                updateVisibility(rowIndex);
-                updateDisplay();
-            };
-            populateDropdownOptions(select, colIndex === 0 ? midiModeOptions : midiModeOptions[globalArray[rowIndex][0]].requiredOptions[colIndex - 1] || [], value);
-            rowDiv.appendChild(select);
+    globalArray.slice(0, 8).forEach((row, index) => {
+        const selectedMidiMode = row[0];
+        const dropdown = createDropdown(midiModeOptions, selectedMidiMode, (newValue) => {
+            updateGlobalArray(index, 0, newValue);
+            rebuildChildDropdowns(index, newValue);
+            updateTextAreaFromArray();
         });
 
-        dropdownArea.appendChild(rowDiv);
+        const label = document.createElement('label');
+        label.textContent = `${index + 1}.`;
+
+        const labelDropdownWrapper = document.createElement('div');
+        labelDropdownWrapper.classList.add('label-dropdown-wrapper');
+        labelDropdownWrapper.appendChild(label);
+        labelDropdownWrapper.appendChild(dropdown);
+
+        const container = document.createElement('div');
+        container.classList.add('dropdown-container');
+        container.appendChild(labelDropdownWrapper);
+
+        const childContainer = document.createElement('div');
+        childContainer.classList.add('child-container');
+        container.appendChild(childContainer);
+
+        dropdownArea.appendChild(container);
+
+        rebuildChildDropdowns(index, selectedMidiMode);
     });
-    updateVisibilityForAllRows(); 
-    updateDisplay(); 
+
+    updateTextAreaFromArray();
 }
 
-function updateVisibilityForAllRows() {
-    globalArray.forEach((row, rowIndex) => {
-        updateVisibility(rowIndex);
+function rebuildChildDropdowns(rowIndex, midiMode) {
+    const container = document.querySelectorAll('.child-container')[rowIndex];
+    container.innerHTML = ''; // Clear existing dropdowns
+
+    const row = globalArray[rowIndex];
+    const { requiredLabels, requiredOptions } = midiModeOptions[midiMode];
+
+    requiredLabels.forEach((labelText, i) => {
+        const dropdownOptions = requiredOptions[i];
+        const selectedValue = row[i + 1];
+
+        const dropdown = createDropdown(dropdownOptions, selectedValue, (newValue) => {
+            updateGlobalArray(rowIndex, i + 1, newValue);
+            updateTextAreaFromArray();
+        });
+
+        const label = document.createElement('label');
+        label.textContent = labelText;
+
+        const wrapper = document.createElement('div');
+        wrapper.classList.add('label-dropdown-wrapper');
+        wrapper.appendChild(label);
+        wrapper.appendChild(dropdown);
+
+        container.appendChild(wrapper);
     });
 }
 
-function updateVisibility(rowIndex) {
-    const row = document.getElementById(`row-${rowIndex}`);
-    const selects = row.getElementsByTagName('select');
-    const modeOption = midiModeOptions[globalArray[rowIndex][0]];
-    const visibleCount = modeOption.visibleCount;
 
-    for (let i = 1; i < selects.length; i++) {
-        const label = selects[i].previousElementSibling;
-        if (i < visibleCount) {
-            selects[i].style.display = '';
-            if (label) label.style.display = '';
-            populateDropdownOptions(selects[i], modeOption.requiredOptions[i - 1], globalArray[rowIndex][i]);
-            label.textContent = modeOption.requiredLabels[i - 1] || "";
-        } else {
-            // Hide and reset hidden elements
-            selects[i].style.display = 'none';
-            globalArray[rowIndex][i] = 0; // Reset to 0
-            if (label) label.style.display = 'none';
-        }
-    }
-}
-
-function populateDropdownOptions(dropdown, options, selectedValue) {
-    dropdown.innerHTML = '';
+function createDropdown(options, selectedValue, onChangeCallback) {
+    const dropdown = document.createElement('select');
     options.forEach(option => {
-        const optionElement = new Option(option.text, option.value);
-        optionElement.selected = option.value === parseInt(selectedValue, 10);
-        dropdown.appendChild(optionElement);
+        const opt = document.createElement('option');
+        opt.value = option.value;
+        opt.textContent = option.text;
+        if (option.value === selectedValue) {
+            opt.selected = true;
+        }
+        dropdown.appendChild(opt);
     });
+
+    dropdown.addEventListener('change', function (event) {
+        const newValue = parseInt(event.target.value);
+        onChangeCallback(newValue);
+    });
+
+    return dropdown;
 }
 
-function updateArrayFromDropdown(rowIndex, colIndex, newValue) {
-    if (colIndex === 0) {
-        const oldMode = midiModeOptions[globalArray[rowIndex][0]];
-        const newMode = midiModeOptions[newValue];
-
-        if (newMode !== oldMode) {
-            resetRowValues(rowIndex, newValue, oldMode);
-        }
-    } else {
-        globalArray[rowIndex][colIndex] = parseInt(newValue, 10);
-    }
-
+function updateGlobalArray(rowIndex, columnIndex, newValue) {
+    globalArray[rowIndex][columnIndex] = newValue;
+    console.log("Updated globalArray:", globalArray);
     localStorage.setItem('globalArray', JSON.stringify(globalArray));
-    console.log(`Updated array at row ${rowIndex}:`, globalArray[rowIndex]);
 }
 
-function resetRowValues(rowIndex, newModeIndex, oldMode) {
-    const newMode = midiModeOptions[newModeIndex];
-    let newRowValues = [newModeIndex]; 
-
-    for (let i = 1; i < globalArray[rowIndex].length; i++) {
-        if (i < newMode.visibleCount) {
-            const optionExistsInOldMode = oldMode.requiredOptions[i - 1] && oldMode.requiredOptions[i - 1].length > 0;
-            const optionExistsInNewMode = newMode.requiredOptions[i - 1] && newMode.requiredOptions[i - 1].length > 0;
-
-            if (optionExistsInOldMode && optionExistsInNewMode) {
-                newRowValues.push(globalArray[rowIndex][i]);
-            } else {
-                newRowValues.push(newMode.requiredOptions[i - 1][0] ? newMode.requiredOptions[i - 1][0].value : 0);
-            }
-        } else {
-            newRowValues.push(0); 
-        }
-    }
-    globalArray[rowIndex] = newRowValues;
-    updateVisibility(rowIndex);
-}
-
-function updateDisplay() {
+function updateTextAreaFromArray() {
     const arrayTextArea = document.getElementById('arrayTextArea');
-    let displayText = globalArray.map(row => 
-        '[' + row.map(item => String(item).padStart(3, ' ')).join(", ") + ']'
-    ).join("\n");
 
-    arrayTextArea.value = displayText;
+    const maskedArray = globalArray.slice(0, 8).map((row) => {
+        const numKeep = midiModeOptions[row[0]].requiredLabels.length + 1;
+        const numPad = row.length - numKeep; 
+        return row.slice(0, numKeep).concat(Array(numPad).fill(0)); 
+    });
+
+    arrayTextArea.value = JSON.stringify(maskedArray, null, 0);
 }
 
-function updateFromText() {
+function updateArrayFromTextArea() {
+    console.log("Tryinng to update from textbox...");
     const arrayTextArea = document.getElementById('arrayTextArea');
+
     try {
-        const newArray = arrayTextArea.value.split("\n").map(row => 
-            row.replace(/[\[\]]/g, '')
-               .split(", ")            
-               .map(Number)            
-        );
+        const parsedArray = JSON.parse(arrayTextArea.value);
 
-        if (Array.isArray(newArray) && newArray.length === globalArray.length &&
-            newArray.every(row => row.length === globalArray[0].length)) {
-            globalArray = newArray;
-            globalArray.forEach((row, rowIndex) => {
-                row.forEach((value, colIndex) => {
-                    const selectId = `dropdown-${rowIndex}-${colIndex}`;
-                    const select = document.getElementById(selectId);
-                    if (select) {
-                        select.value = value;
-                        updateVisibility(rowIndex);
-                    }
-                });
+        if (Array.isArray(parsedArray)) {
+            parsedArray.slice(0, 8).forEach((row, index) => {
+                const numKeep = midiModeOptions[row[0]].requiredLabels.length + 1
+                globalArray[index].splice(0, numKeep, ...parsedArray[index].slice(0, numKeep));
             });
+
             localStorage.setItem('globalArray', JSON.stringify(globalArray));
-            updateVisibilityForAllRows();
+
+            console.log("globalArray updated successfully:", globalArray);
+            initializeDropdowns();
         } else {
-            console.error("Invalid array format or dimensions.");
+            console.error("The content in the textarea is not a valid array.");
         }
-    } catch (e) {
-        console.error("Error parsing array from text:", e);
+    } catch (error) {
+        console.error("Invalid JSON format:", error);
     }
 }
 
@@ -220,7 +202,7 @@ async function sendSysExMessageWithPauses() {
             const midiAccess = await navigator.requestMIDIAccess({ sysex: true });
             onMIDISuccess(midiAccess);
         } catch (error) {
-            onMIDIFailure(error);
+            console.error("Failed to access MIDI devices:", error);
         }
     } else {
         alert("Web MIDI API is not supported in this browser.");
@@ -229,12 +211,16 @@ async function sendSysExMessageWithPauses() {
 
 async function onMIDISuccess(midiAccess) {
     const outputs = Array.from(midiAccess.outputs.values());
+
+    const maskedArray = globalArray.slice(0, 8).map((row) => {
+        const numKeep = midiModeOptions[row[0]].requiredLabels.length + 1;
+        const numPad = row.length - numKeep; 
+        return row.slice(0, numKeep).concat(Array(numPad).fill(0)); 
+    });
+
     if (outputs.length > 0) {
-        const output = outputs[0];  
-        const flattenedArray = globalArray.flat().map(value => value & 0x7F);
-
-        const sysExMessage = [0xF0, ...flattenedArray, 0xF7];
-
+        const output = outputs[0];
+        const sysExMessage = asSysEx(maskedArray)
         output.send(sysExMessage);
         console.log("Sent SysEx message:", sysExMessage);
     } else {
@@ -242,8 +228,14 @@ async function onMIDISuccess(midiAccess) {
     }
 }
 
-function onMIDIFailure(error) {
-    console.error("Failed to access MIDI devices:", error);
+function asSysEx(array) {
+    const sysExArray = [0xF0];
+    array.flat().forEach(value => {
+        sysExArray.push(value & 0x7F);  // Push the least significant 7 bits
+        sysExArray.push((value >>= 7) & 0x7F);  // Push the remaining 7 bits if non-zero
+    });
+    sysExArray.push(0xF7);
+    return sysExArray;
 }
 
 function delay(ms) {

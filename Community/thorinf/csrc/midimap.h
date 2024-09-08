@@ -25,6 +25,8 @@ typedef struct {
     uint8_t cvValue2;
 } MIDIMapEntry;
 
+#define MIDI_MAP_SIZE (sizeof(MIDIMapEntry) * NUM_GATES)
+
 // MIDI mapping for velocity (Original Tram8)
 MIDIMapEntry midi_map_velo[NUM_GATES] = {
     {MIDIMAP_VELOCITY, 0x90, 24, 0, 0, 0, 0},  // Gate C0

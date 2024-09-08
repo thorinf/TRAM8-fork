@@ -70,7 +70,7 @@ void updateLED(void);
 void saveMidiMap(MIDIMapEntry *src, uint8_t *location);
 void loadMidiMap(MIDIMapEntry *dst, uint8_t *location);
 void copyMidiMap(MIDIMapEntry *src, MIDIMapEntry *dst);
-void sysExMidiMap(void);
+void sysExMidiMap(MIDIMapEntry *dst);
 void newSeeds(void);
 void resetDacBuffer(void);
 void handleMIDIMessage(void);
@@ -138,7 +138,7 @@ int main(void) {
                             subRoutine = 0;
                             break;
                         case 4:
-                            sysExMidiMap();
+                            sysExMidiMap(midi_map);
                             subRoutine = 0;
                             break;
                     }
@@ -292,7 +292,7 @@ void copyMidiMap(MIDIMapEntry *src, MIDIMapEntry *dst) {
     }
 }
 
-void sysExMidiMap() {
+void sysExMidiMap(MIDIMapEntry *dst) {
     uint8_t sysExBuffer[114];
     uint8_t *bufferPtr = sysExBuffer;
 
@@ -316,13 +316,13 @@ void sysExMidiMap() {
 
     uint8_t index = 1;
     for (uint8_t i = 0; i < NUM_GATES; i++) {
-        midi_map[i].mapType = sysExBuffer[index] | (sysExBuffer[index + 1] << 7);
-        midi_map[i].gateCommand = sysExBuffer[index + 2] | (sysExBuffer[index + 3] << 7);
-        midi_map[i].gateValue = sysExBuffer[index + 4] | (sysExBuffer[index + 5] << 7);
-        midi_map[i].cvCommand1 = sysExBuffer[index + 6] | (sysExBuffer[index + 7] << 7);
-        midi_map[i].cvValue1 = sysExBuffer[index + 8] | (sysExBuffer[index + 9] << 7);
-        midi_map[i].cvCommand2 = sysExBuffer[index + 10] | (sysExBuffer[index + 11] << 7);
-        midi_map[i].cvValue2 = sysExBuffer[index + 12] | (sysExBuffer[index + 13] << 7);
+        dst[i].mapType = sysExBuffer[index] | (sysExBuffer[index + 1] << 7);
+        dst[i].gateCommand = sysExBuffer[index + 2] | (sysExBuffer[index + 3] << 7);
+        dst[i].gateValue = sysExBuffer[index + 4] | (sysExBuffer[index + 5] << 7);
+        dst[i].cvCommand1 = sysExBuffer[index + 6] | (sysExBuffer[index + 7] << 7);
+        dst[i].cvValue1 = sysExBuffer[index + 8] | (sysExBuffer[index + 9] << 7);
+        dst[i].cvCommand2 = sysExBuffer[index + 10] | (sysExBuffer[index + 11] << 7);
+        dst[i].cvValue2 = sysExBuffer[index + 12] | (sysExBuffer[index + 13] << 7);
 
         index += 14;
 

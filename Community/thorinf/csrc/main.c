@@ -108,9 +108,10 @@ int main(void) {
             case 0:  // Normal play
                 if (buttonState == BUTTON_RELEASED)
                     newSeeds();
-                else if (buttonState == BUTTON_HELD)
+                else if (buttonState == BUTTON_HELD) {
                     menuState = 0;
-                subRoutine = 1;
+                    subRoutine = 1;
+                }
                 break;
             case 1:  // In Menu
                 if (buttonState == BUTTON_RELEASED) {

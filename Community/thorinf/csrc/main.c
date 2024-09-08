@@ -142,6 +142,9 @@ int main(void) {
                             sysExMidiMap(midi_map);
                             subRoutine = 0;
                             break;
+                        case 5:
+                            subRoutine = 0;
+                            break;
                     }
                 }
                 break;

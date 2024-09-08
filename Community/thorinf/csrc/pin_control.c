@@ -19,6 +19,18 @@ void pin_initialize(void) {
     CLR_PORT |= (1 << CLR_PIN);    // Set CLR high to avoid clearing the DAC (active-low signal, high means no clear)
 }
 
+uint8_t read_button(void) {
+    return BUTTON_PIN_REG & (1 << BUTTON_PIN);
+}
+
+void led_on(void) {
+    LED_PORT &= ~(1 << LED_PIN);
+}
+
+void led_off(void) {
+    LED_PORT |= (1 << LED_PIN);
+}
+
 void gate_set(uint8_t gateIndex, uint8_t state) {
     uint8_t pin = (gateIndex == 0) ? GATE_PIN_0 : GATE_PIN_1 + gateIndex - 1;
     volatile uint8_t *port = (gateIndex == 0) ? &GATE_PORT_B : &GATE_PORT_D;

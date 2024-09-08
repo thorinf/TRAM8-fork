@@ -108,6 +108,7 @@ int main(void) {
                     newSeeds();
                 else if (buttonState == BUTTON_HELD) {
                     menuState = 0;
+                    gate_set(menuState, 1);
                     subRoutine = 1;
                 }
                 break;
@@ -122,7 +123,7 @@ int main(void) {
                     switch (menuState) {
                         case 0:
                             ledState = LED_BLINK1;
-                            ledBlinkCount = MIDIMAP_VELOCITY;
+                            ledBlinkCount = MIDIMAP_VELOCITY + 1;
                             subRoutine = 2;
                             break;
                         case 1:
@@ -516,12 +517,12 @@ inline void midiLearn() {
             case MIDIMAP_RANDSEQ:
                 learningMapType++;
                 ledState = LED_BLINK1;
-                ledBlinkCount = learningMapType;
+                ledBlinkCount = learningMapType + 1;
                 break;
             default:
                 learningMapType = MIDIMAP_VELOCITY;
                 ledState = LED_BLINK1;
-                ledBlinkCount = learningMapType;
+                ledBlinkCount = learningMapType + 1;
                 break;
         }
     }

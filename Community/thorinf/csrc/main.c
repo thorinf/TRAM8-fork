@@ -72,7 +72,7 @@ void menu(void);
 void saveMidiMap(void);
 void loadMidiMap(void);
 void copyMidiMap(void);
-// void sysExMidiMap(void);
+void sysExMidiMap(void);
 void newSeeds(void);
 void resetDacBuffer(void);
 void handleMIDIMessage(void);
@@ -110,7 +110,7 @@ int main(void) {
                     newSeeds();
                 else if (buttonState == BUTTON_HELD)
                     menuState = 0;
-                    subRoutine = 1;
+                subRoutine = 1;
                 break;
             case 1:  // In Menu
                 if (buttonState == BUTTON_RELEASED) {
@@ -139,7 +139,7 @@ int main(void) {
                             subRoutine = 0;
                             break;
                         case 4:
-                            // sysExMidiMap();
+                            sysExMidiMap();
                             subRoutine = 0;
                             break;
                     }
@@ -293,36 +293,46 @@ void copyMidiMap() {
     }
 }
 
-// void sysExMidiMap() {
-//     uint8_t sysExBuffer[114];
-//     uint8_t *bufferPtr = sysExBuffer;
+void sysExMidiMap() {
+    uint8_t sysExBuffer[114];
+    uint8_t *bufferPtr = sysExBuffer;
 
-//     cli();
-//     gate_set_multiple(0x81, 1);
+    cli();
+    gate_set_multiple(0x81, 1);
 
-//     for (uint8_t i = 0; i < sizeof(sysExBuffer); i++) {
-//         while (!(UCSRA & (1 << RXC)));
-//         sysExBuffer[i] = UDR;
-//     }
+    for (uint8_t i = 0; i < sizeof(sysExBuffer); i++) {
+        while (!(UCSRA & (1 << RXC)));
+        sysExBuffer[i] = UDR;
+    }
 
-//     gate_set_multiple(0x81, 0);
-//     sei();
+    gate_set_multiple(0x81, 0);
 
-//     if ((sysExBuffer[0] != 0xF0) || (sysExBuffer[113] != 0xF7)) {
-//         gate_set_multiple(0xFF, 1);
-//         _delay_ms(50);
-//         gate_set_multiple(0xFF, 0);
-//         return;
-//     }
+    if ((sysExBuffer[0] != 0xF0) || (sysExBuffer[113] != 0xF7)) {
+        gate_set_multiple(0xFF, 1);
+        _delay_ms(50);
+        gate_set_multiple(0xFF, 0);
+        sei();
+        return;
+    }
 
-//     for (uint8_t i = 0; i < sizeof(midi_map); i++) {
-//         gate_set_multiple(i, 1);
-//         midi_map[i] = sysExBuffer[(2 * i) + 1];
-//         midi_map[i] |= sysExBuffer[(2 * i) + 2] << 7;
-//         _delay_ms(50);
-//         gate_set_multiple(i, 0);
-//     }
-// }
+    uint8_t index = 1;
+    for (uint8_t i = 0; i < NUM_GATES; i++) {
+        midi_map[i].mapType = sysExBuffer[index] | (sysExBuffer[index + 1] << 7);
+        midi_map[i].gateCommand = sysExBuffer[index + 2] | (sysExBuffer[index + 3] << 7);
+        midi_map[i].gateValue = sysExBuffer[index + 4] | (sysExBuffer[index + 5] << 7);
+        midi_map[i].cvCommand1 = sysExBuffer[index + 6] | (sysExBuffer[index + 7] << 7);
+        midi_map[i].cvValue1 = sysExBuffer[index + 8] | (sysExBuffer[index + 9] << 7);
+        midi_map[i].cvCommand2 = sysExBuffer[index + 10] | (sysExBuffer[index + 11] << 7);
+        midi_map[i].cvValue2 = sysExBuffer[index + 12] | (sysExBuffer[index + 13] << 7);
+
+        index += 14;
+
+        gate_set_multiple(i, 1);
+        _delay_ms(50);
+    }
+    gate_set_multiple(0xFF, 0);
+    sei();
+}
 
 void resetDacBuffer() {
     for (uint8_t i = 0; i < NUM_GATES; i++) {
@@ -345,7 +355,7 @@ void newSeeds() {
 inline void handleMIDIMessage() {
     uint8_t gateIndex = 0;
     uint8_t commandFiltered = midiMsg.status & 0xEF;
-    uint8_t noteOnFlag = (midiMsg.status & 0xF0) == 0x90;
+    uint8_t noteOnFlag = IS_NOTE_ON(midiMsg.status);
     uint8_t data1 = midiMsg.data1;
 
     while (gateIndex < NUM_GATES) {

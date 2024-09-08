@@ -3,8 +3,9 @@
 
 #include <avr/io.h>
 
+#include "hardware_config.h"
+
 // MIDI Map Types
-#define MIDI_MAP_SIZE 8
 #define NUM_MIDIMAP_TYPES 6
 #define MIDIMAP_VELOCITY 0
 #define MIDIMAP_CC 1
@@ -25,7 +26,7 @@ typedef struct {
 } MIDIMapEntry;
 
 // MIDI mapping for velocity (Original Tram8)
-MIDIMapEntry midi_map_velo[MIDI_MAP_SIZE] = {
+MIDIMapEntry midi_map_velo[NUM_GATES] = {
     {MIDIMAP_VELOCITY, 0x90, 24, 0, 0, 0, 0},  // Gate C0
     {MIDIMAP_VELOCITY, 0x90, 25, 0, 0, 0, 0},  // Gate C#0
     {MIDIMAP_VELOCITY, 0x90, 26, 0, 0, 0, 0},  // Gate D0
@@ -37,7 +38,7 @@ MIDIMapEntry midi_map_velo[MIDI_MAP_SIZE] = {
 };
 
 // MIDI mapping for CC (Original Tram8)
-MIDIMapEntry midi_map_cc[MIDI_MAP_SIZE] = {
+MIDIMapEntry midi_map_cc[NUM_GATES] = {
     {MIDIMAP_VELOCITY, 0x90, 24, 0xB0, 69, 0, 0},  // Gate C0
     {MIDIMAP_VELOCITY, 0x90, 25, 0xB0, 70, 0, 0},  // Gate C#0
     {MIDIMAP_VELOCITY, 0x90, 26, 0xB0, 71, 0, 0},  // Gate D0
@@ -49,15 +50,15 @@ MIDIMapEntry midi_map_cc[MIDI_MAP_SIZE] = {
 };
 
 // MIDI mapping for the BeatStep Pro
-MIDIMapEntry midi_map_bsp[MIDI_MAP_SIZE] = {
+MIDIMapEntry midi_map_bsp[NUM_GATES] = {
     {MIDIMAP_RANDSEQ_SAH, 0x97, 36, 0x97, 44, 0x97, 45},  // Gate C0, Step G#0, Reset A0
     {MIDIMAP_RANDSEQ_SAH, 0x97, 37, 0x97, 46, 0x97, 47},  // Gate C#0, Step A#0, Reset B0
-    {MIDIMAP_RANDSEQ,     0x97, 38, 0x97, 48, 0x97, 49},  // Gate D0, Step C1, Reset C#1
-    {MIDIMAP_RANDSEQ,     0x97, 39, 0x97, 50, 0x97, 51},  // Gate D#0, Step D1, Reset D#1
-    {MIDIMAP_VELOCITY,    0x97, 40, 0,    0,  0,    0},   // Gate E0
-    {MIDIMAP_VELOCITY,    0x97, 41, 0,    0,  0,    0},   // Gate F0
-    {MIDIMAP_PITCH,       0x90, 0,  0,    0,  0,    0},   // Sequencer 1
-    {MIDIMAP_PITCH,       0x91, 0,  0,    0,  0,    0},   // Sequencer 2
+    {MIDIMAP_RANDSEQ, 0x97, 38, 0x97, 48, 0x97, 49},      // Gate D0, Step C1, Reset C#1
+    {MIDIMAP_RANDSEQ, 0x97, 39, 0x97, 50, 0x97, 51},      // Gate D#0, Step D1, Reset D#1
+    {MIDIMAP_VELOCITY, 0x97, 40, 0, 0, 0, 0},             // Gate E0
+    {MIDIMAP_VELOCITY, 0x97, 41, 0, 0, 0, 0},             // Gate F0
+    {MIDIMAP_PITCH, 0x90, 0, 0, 0, 0, 0},                 // Sequencer 1
+    {MIDIMAP_PITCH, 0x91, 0, 0, 0, 0, 0},                 // Sequencer 2
 };
 
 #endif

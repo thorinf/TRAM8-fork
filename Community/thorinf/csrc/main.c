@@ -59,7 +59,6 @@ typedef struct {
 
 volatile MIDI_Message midiMsg = {0, 0, 0, 0};
 
-MIDIMapEntry *midi_map_preset = midi_map_bsp;
 MIDIMapEntry midi_map[NUM_GATES];
 uint16_t dac_buffer[NUM_GATES];
 uint16_t lfsr_seeds[NUM_GATES];
@@ -68,10 +67,9 @@ void setup(void);
 void USART_Init(unsigned int ubrr);
 void processButton(void);
 void updateLED(void);
-void menu(void);
-void saveMidiMap(void);
-void loadMidiMap(void);
-void copyMidiMap(void);
+void saveMidiMap(MIDIMapEntry *src, uint8_t *location);
+void loadMidiMap(MIDIMapEntry *dst, uint8_t *location);
+void copyMidiMap(MIDIMapEntry *src, MIDIMapEntry *dst);
 void sysExMidiMap(void);
 void newSeeds(void);
 void resetDacBuffer(void);
@@ -83,7 +81,7 @@ void setup() {
     twi_init();
     max5825_init();
     USART_Init(MY_UBRR);
-    loadMidiMap();
+    loadMidiMap(midi_map, EEPROM_MIDIMAP);
 
     for (uint8_t i = 0; i < NUM_GATES; i++) {
         lfsr_seeds[i] = (i + 1) << 4;
@@ -128,15 +126,15 @@ int main(void) {
                             subRoutine = 2;
                             break;
                         case 1:
-                            saveMidiMap();
+                            saveMidiMap(midi_map, EEPROM_MIDIMAP);
                             subRoutine = 0;
                             break;
                         case 2:
-                            loadMidiMap();
+                            loadMidiMap(midi_map, EEPROM_MIDIMAP);
                             subRoutine = 0;
                             break;
                         case 3:
-                            copyMidiMap();
+                            copyMidiMap(midi_map, midi_map_bsp);
                             subRoutine = 0;
                             break;
                         case 4:
@@ -278,19 +276,19 @@ void updateLED(void) {
     }
 }
 
-void saveMidiMap() {
+void saveMidiMap(MIDIMapEntry *src, uint8_t *location) {
     while (!eeprom_is_ready());
-    eeprom_write_block((const void *)&midi_map, EEPROM_MIDIMAP, sizeof(midi_map));
+    eeprom_write_block((const void *)src, (void *)location, sizeof(midi_map));
 }
 
-void loadMidiMap() {
+void loadMidiMap(MIDIMapEntry *dst, uint8_t *location) {
     while (!eeprom_is_ready());
-    eeprom_read_block((void *)&midi_map, EEPROM_MIDIMAP, sizeof(midi_map));
+    eeprom_read_block((void *)dst, (const void *)location, sizeof(midi_map));
 }
 
-void copyMidiMap() {
+void copyMidiMap(MIDIMapEntry *src, MIDIMapEntry *dst) {
     for (uint8_t i = 0; i < NUM_GATES; i++) {
-        midi_map[i] = midi_map_preset[i];
+        dst[i] = src[i];
     }
 }
 

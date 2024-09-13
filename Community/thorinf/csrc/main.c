@@ -105,7 +105,7 @@ int main(void) {
                             subRoutine = 0;
                             break;
                         case 3:
-                            copyMidiMap(midi_map, midi_map_bsp);
+                            copyMidiMap(midi_map_bsp, midi_map);
                             subRoutine = 0;
                             break;
                         case 4:

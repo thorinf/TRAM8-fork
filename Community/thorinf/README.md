@@ -15,7 +15,7 @@ This firmware allows each of the 8 Gate-CV pairs to be programmed individually w
 | **3. Pitch**                                | Keyboard       | Note message matching trigger condition (Channel).           | Pitch (5 octave range) of the Note message.                                                                                     |
 | **4. Pitch, Sample & Hold**                 | Drum Pad       | Note message matching trigger condition (Channel G & Pitch). | Pitch value (Note message on Channel P) is held in buffer. Gate trigger (Channel G) updates CV from the stored buffer.          |
 | **5. Random Step Sequencer\***                | Drum Pad       | Note message matching trigger condition (Channel & Pitch S). | NoteOn message with Step condition (Channel & Pitch S) updates the CV output with a new sequence value. NoteOn message with Reset condition (Channel & Pitch_R) resets the Random Sequence. |
-| **6. Random Step Sequencer\*, Sample & Hold** | Drum Pad       | Note message matching trigger condition (Channel & Pitch G). | Similar to Random Step Sequencer: Gate trigger updates the CV from buffer (Channel & Pitch G), Step (Pitch S) updates buffer values, and Reset (Pitch_R) resets the sequence. |
+| **6. Random Step Sequencer\*, Sample & Hold** | Drum Pad       | Note message matching trigger condition (Channel & Pitch G). | Similar to Random Step Sequencer, however the new random value from the Step Sequence is sampled when a Gate Condition is triggered. |
 
 ### *Random Step Sequencer
 

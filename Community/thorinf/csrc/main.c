@@ -1,12 +1,3 @@
-#define F_CPU 16000000UL
-#define BAUD 31250UL
-#define MY_UBRR F_CPU / 16 / BAUD - 1
-
-#include <avr/eeprom.h>
-#include <avr/interrupt.h>
-#include <avr/io.h>
-#include <util/delay.h>
-
 #include "hardware_config.h"
 #include "max5825_control.h"
 #include "midimap.h"
@@ -15,6 +6,11 @@
 #include "random.h"
 #include "twi_control.h"
 #include "io.h"
+
+#include <avr/eeprom.h>
+#include <avr/interrupt.h>
+#include <avr/io.h>
+#include <util/delay.h>
 
 #define IS_NOTE_ON(command) (((command) & 0xF0) == 0x90)
 
@@ -54,7 +50,7 @@ void setup() {
     twi_init();
     max5825_init();
     USART_Init(MY_UBRR);
-    loadMidiMap(midi_map, EEPROM_MIDIMAP);
+    loadMidiMap(midi_map, (uint8_t *)EEPROM_MIDIMAP_ADDR);
 
     for (uint8_t i = 0; i < NUM_GATES; i++) {
         lfsr_seeds[i] = (i + 1) << 4;
@@ -85,6 +81,7 @@ int main(void) {
                     subRoutine = 1;
                 }
                 break;
+
             case 1:  // In Menu
                 if (learnButton.buttonState == BUTTON_RELEASED) {
                     gate_set(menuState, 0);
@@ -100,11 +97,11 @@ int main(void) {
                             subRoutine = 2;
                             break;
                         case 1:
-                            saveMidiMap(midi_map, EEPROM_MIDIMAP);
+                            saveMidiMap(midi_map, (uint8_t *)EEPROM_MIDIMAP_ADDR);
                             subRoutine = 0;
                             break;
                         case 2:
-                            loadMidiMap(midi_map, EEPROM_MIDIMAP);
+                            loadMidiMap(midi_map, (uint8_t *)EEPROM_MIDIMAP_ADDR);
                             subRoutine = 0;
                             break;
                         case 3:
@@ -121,6 +118,7 @@ int main(void) {
                     }
                 }
                 break;
+                
             case 2:  // Learning
                 midiLearn();
                 break;

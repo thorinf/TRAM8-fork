@@ -36,6 +36,10 @@ Velocity/CV Outputs:
 	7: random triggered each bar
 	8: 16th stepped ramp to go from 0-5V in a bar
 
+# Community Forks
+
+- [tram8+](https://github.com/thorinf/tram8-plus) — custom firmware adding velocity/CC/SysEx operating modes, per-gate MIDI channel and note mapping, MIDI learn, multi-note-per-gate stacking, and an optional macOS VST3 plugin for direct DAW control.
+
 # CC BY-NC-ND 4.0 KAY KNOFE OF LPZW.modules
 
 
